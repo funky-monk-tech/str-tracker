@@ -241,11 +241,21 @@ const SEED = [
   {id:'seed7',distance:'20 min to Asheville',ppa:'N/A',plan:'B',addr:'3BR Swannanoa — wraparound porch + hot tub',loc:'Swannanoa, NC 28778',price:410000,acres:2.68,build:35000,zone:'Unincorporated Buncombe',hoa:'none',str:'yes',road:'paved',septic:'installed',photo:'https://photos.zillowstatic.com/fp/2882ab0defcd02e8dccda4b260dfbe2a-cc_ft_576.jpg',url:'https://www.redfin.com/city/25636/NC/Swannanoa',pros:['2.68 acres — room to expand','Wraparound porch + basement hot tub','Between Asheville and Black Mtn'],cons:['Confirm flood zone status post-Helene','Verify STR at parcel level'],notes:'3BR/3.5BA, finished basement, mountain views.'},
 ];
 
+// ── PASTE YOUR SUPABASE CREDENTIALS HERE ──────────────────────────────
+const DEFAULT_SB_URL = 'https://atfkqzuzylfcmcbsmybn.supabase.co';
+const DEFAULT_SB_KEY = 'PASTE_YOUR_LEGACY_ANON_KEY_HERE';
+// ──────────────────────────────────────────────────────────────────────
+
 let SB_URL = '', SB_KEY = '';
 
 function loadCreds(){
-  SB_URL = localStorage.getItem('sb_url')||'';
-  SB_KEY = localStorage.getItem('sb_key')||'';
+  // Use hardcoded defaults first, then fall back to localStorage
+  SB_URL = DEFAULT_SB_KEY !== 'PASTE_YOUR_LEGACY_ANON_KEY_HERE'
+    ? DEFAULT_SB_URL
+    : (localStorage.getItem('sb_url') || '');
+  SB_KEY = DEFAULT_SB_KEY !== 'PASTE_YOUR_LEGACY_ANON_KEY_HERE'
+    ? DEFAULT_SB_KEY
+    : (localStorage.getItem('sb_key') || '');
   return !!(SB_URL && SB_KEY);
 }
 
