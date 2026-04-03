@@ -121,6 +121,11 @@ code{font-family:monospace;font-size:12px;background:#f0f0ee;padding:1px 5px;bor
     <button class="tab" onclick="showTab('add',this)">+ Add property</button>
   <button class="tab" onclick="document.getElementById('import-input').click()">&#8593; Import JSON</button>
   <input type="file" id="import-input" accept=".json" style="display:none;" onchange="importJSON(this)"/>
+  <div class="view-toggles">
+    <button class="vt-btn" onclick="setView('compact',this)" title="Compact — see more properties">&#9632;&#9632;&#9632;</button>
+    <button class="vt-btn active" onclick="setView('standard',this)" title="Standard">&#9632;&#9632;</button>
+    <button class="vt-btn" onclick="setView('large',this)" title="Large — big photos">&#9632;</button>
+  </div>
   </div>
 
   <div id="tab-all" class="view active"><div class="grid" id="grid-all"></div></div>
@@ -245,7 +250,7 @@ const SEED = [
 
 // ── PASTE YOUR SUPABASE CREDENTIALS HERE ──────────────────────────────
 const DEFAULT_SB_URL = 'https://atfkqzuzylfcmcbsmybn.supabase.co';
-const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0ZmtxenV6eWxmY21jYnNteWJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMzk2OTMsImV4cCI6MjA5MDgxNTY5M30.MJN0YyO0uYU_tzr7KB-PP5YdFpQv_N9ZBhXGBPgyYdo';
+const DEFAULT_SB_KEY = 'PASTE_YOUR_LEGACY_ANON_KEY_HERE';
 // ──────────────────────────────────────────────────────────────────────
 
 let SB_URL = '', SB_KEY = '';
@@ -270,6 +275,7 @@ function saveCredentials(){
   localStorage.setItem('sb_key',k);
   document.getElementById('setup-overlay').style.display='none';
   init();
+const savedView=localStorage.getItem("mr_view");if(savedView&&savedView!=="standard"){const vb=document.querySelector(`.vt-btn[onclick*="${savedView}"]`);setView(savedView,vb);}
 }
 
 function showSetup(){
@@ -485,6 +491,19 @@ function showTab(name,btn){
 }
 
 init();
+
+function setView(size, btn) {
+  document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const grids = document.querySelectorAll('.grid');
+  grids.forEach(g => {
+    g.classList.remove('grid-compact','grid-large');
+    if(size === 'compact') g.classList.add('grid-compact');
+    if(size === 'large') g.classList.add('grid-large');
+  });
+  localStorage.setItem('mr_view', size);
+}
+
 
 
 // AI Listing Analyzer
