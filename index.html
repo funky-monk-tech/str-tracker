@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WNC STR Deal Analyzer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh;}
+.topbar{background:#fff;border-bottom:1px solid #e5e5e3;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:15px;font-weight:600;color:#1a1a1a;}
+.logo span{color:#1D9E75;}
+.sync-status{font-size:11px;padding:3px 10px;border-radius:12px;font-weight:500;}
+.sync-ok{background:#E1F5EE;color:#085041;}
+.sync-err{background:#FCEBEB;color:#A32D2D;}
+.sync-load{background:#FAEEDA;color:#633806;}
+.container{max-width:1100px;margin:0 auto;padding:20px;}
+.assumption-bar{background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:10px 16px;font-size:12px;color:#666;display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;}
+.assumption-bar strong{color:#1a1a1a;}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.tab{font-size:12px;padding:6px 16px;border-radius:20px;border:1px solid #ddd;cursor:pointer;background:#fff;color:#666;transition:all .15s;}
+.tab:hover{border-color:#999;color:#1a1a1a;}
+.tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.view{display:none;}
+.view.active{display:block;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+.card{background:#fff;border:1px solid #e5e5e3;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .15s;}
+.card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.card.top{border:2px solid #1D9E75;}
+.card.strong{border:2px solid #378ADD;}
+.card-img{width:100%;height:180px;object-fit:cover;display:block;background:#f0f0ee;}
+.card-img-placeholder{width:100%;height:180px;background:#f0f0ee;display:flex;align-items:center;justify-content:center;color:#999;font-size:13px;}
+.stripe{height:3px;}
+.stripe-a{background:#378ADD;}
+.stripe-b{background:#1D9E75;}
+.card-body{padding:14px 16px;flex:1;}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;}
+.card-title{font-size:14px;font-weight:600;line-height:1.3;}
+.card-sub{font-size:12px;color:#888;margin-top:2px;}
+.plan-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
+.badge-a{background:#E6F1FB;color:#0C447C;}
+.badge-b{background:#E1F5EE;color:#085041;}
+.financials{background:#f8f8f7;border-radius:8px;padding:10px 12px;margin:10px 0;}
+.fin-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+.fk{color:#888;}
+.fv{color:#1a1a1a;font-weight:500;}
+.fv.pos{color:#0F6E56;}
+.fv.neg{color:#A32D2D;}
+.fv.neu{color:#854F0B;}
+.divider{border-top:1px solid #e5e5e3;margin:5px 0;}
+.score-wrap{margin:8px 0;}
+.score-top{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:3px;}
+.bar-bg{height:5px;background:#e5e5e3;border-radius:3px;overflow:hidden;}
+.bar-fg{height:100%;border-radius:3px;}
+.pros-cons{font-size:11px;line-height:1.7;margin-top:8px;}
+.pro{color:#0F6E56;}
+.con{color:#854F0B;}
+.card-footer{padding:10px 16px;border-top:1px solid #e5e5e3;display:flex;justify-content:space-between;align-items:center;}
+.verdict{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;}
+.v-top{background:#E1F5EE;color:#085041;}
+.v-strong{background:#E6F1FB;color:#0C447C;}
+.v-ok{background:#FAEEDA;color:#633806;}
+.view-link{font-size:11px;color:#185FA5;text-decoration:none;}
+.view-link:hover{text-decoration:underline;}
+.delete-btn{font-size:10px;color:#A32D2D;cursor:pointer;background:none;border:none;padding:2px 4px;}
+.form-card{background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:20px;margin-bottom:16px;}
+.form-card h3{font-size:15px;font-weight:600;margin-bottom:14px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.form-full{grid-column:span 2;}
+.fld{display:flex;flex-direction:column;gap:4px;}
+.fld label{font-size:12px;color:#666;}
+.fld input,.fld select,.fld textarea{font-size:13px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#1a1a1a;outline:none;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:#1D9E75;}
+.fld textarea{resize:vertical;min-height:60px;}
+.btn{font-size:13px;padding:8px 18px;border-radius:6px;border:1px solid #ddd;cursor:pointer;background:#1a1a1a;color:#fff;font-weight:500;}
+.btn:hover{background:#333;}
+.btn-ghost{background:#fff;color:#1a1a1a;border:1px solid #ddd;}
+.btn-ghost:hover{background:#f5f5f3;}
+.btn-row{display:flex;gap:8px;}
+.setup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;}
+.setup-card{background:#fff;border-radius:16px;padding:28px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+.setup-card h2{font-size:18px;font-weight:600;margin-bottom:8px;}
+.setup-card p{font-size:13px;color:#666;line-height:1.6;margin-bottom:16px;}
+.setup-card .fld{margin-bottom:12px;}
+.empty{text-align:center;padding:60px 20px;color:#888;font-size:14px;}
+.tag-top{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;background:#E1F5EE;color:#085041;margin-bottom:4px;}
+code{font-family:monospace;font-size:12px;background:#f0f0ee;padding:1px 5px;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">WNC STR <span>Deal Analyzer</span></div>
+  <div>
+    <span class="sync-status sync-load" id="sync-badge">Connecting...</span>
+    <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;margin-left:8px;" onclick="showSetup()">Settings</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="assumption-bar">
+    <span><strong>Occupancy:</strong> 45%</span>
+    <span><strong>ADR:</strong> $210/night</span>
+    <span><strong>Down payment:</strong> 30%</span>
+    <span><strong>DSCR rate:</strong> 8.0%</span>
+    <span><strong>Term:</strong> 30 yr</span>
+    <span><strong>Conservative model — updated Apr 2026</strong></span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('all',this)">All viable</button>
+    <button class="tab" onclick="showTab('A',this)">Plan A — land+build</button>
+    <button class="tab" onclick="showTab('B',this)">Plan B — buy+list</button>
+    <button class="tab" onclick="showTab('add',this)">+ Add property</button>
+  </div>
+
+  <div id="tab-all" class="view active"><div class="grid" id="grid-all"></div></div>
+  <div id="tab-A" class="view"><div class="grid" id="grid-A"></div></div>
+  <div id="tab-B" class="view"><div class="grid" id="grid-B"></div></div>
+
+  <div id="tab-add" class="view">
+    <div class="form-card">
+      <h3>Add new property</h3>
+      <div class="form-grid">
+        <div class="fld form-full"><label>Address</label><input id="f-addr" placeholder="158 Sugar Cove Rd, Weaverville NC"/></div>
+        <div class="fld form-full"><label>Zillow / Redfin URL</label><input id="f-url" placeholder="https://www.zillow.com/..."/></div>
+        <div class="fld form-full"><label>Photo URL (right-click photo on listing → Copy image address)</label><input id="f-photo" placeholder="https://photos.zillowstatic.com/..."/></div>
+        <div class="fld"><label>Plan</label>
+          <select id="f-plan">
+            <option value="A">Plan A — Land + Build</option>
+            <option value="B">Plan B — Buy + List</option>
+          </select>
+        </div>
+        <div class="fld"><label>Asking price ($)</label><input id="f-price" type="number" placeholder="299000"/></div>
+        <div class="fld"><label>Acres</label><input id="f-acres" type="number" step="0.1" placeholder="19.54"/></div>
+        <div class="fld"><label>Build / reno cost estimate ($)</label><input id="f-build" type="number" placeholder="200000"/></div>
+        <div class="fld"><label>Zoning</label><input id="f-zone" placeholder="OU, unrestricted, R-1..."/></div>
+        <div class="fld"><label>HOA</label>
+          <select id="f-hoa">
+            <option value="none">None</option>
+            <option value="light">Light — road maintenance only</option>
+            <option value="heavy">HOA with restrictions</option>
+          </select>
+        </div>
+        <div class="fld"><label>STR permitted?</label>
+          <select id="f-str">
+            <option value="yes">Yes — confirmed</option>
+            <option value="likely">Likely — unincorporated county</option>
+            <option value="unknown">Unknown — verify needed</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div class="fld"><label>Road access</label>
+          <select id="f-road">
+            <option value="paved">Paved, public</option>
+            <option value="paved-private">Paved, private</option>
+            <option value="gravel">Gravel</option>
+            <option value="rough">Rough / 4WD needed</option>
+          </select>
+        </div>
+        <div class="fld"><label>Septic</label>
+          <select id="f-septic">
+            <option value="installed">Installed</option>
+            <option value="permitted">Permitted / perc done</option>
+            <option value="needed">Needed</option>
+          </select>
+        </div>
+        <div class="fld form-full"><label>Pros (one per line)</label>
+          <textarea id="f-pros" placeholder="Creek on property&#10;OU zoned&#10;Paved access"></textarea>
+        </div>
+        <div class="fld form-full"><label>Flags / concerns (one per line)</label>
+          <textarea id="f-cons" placeholder="CCR needs title search&#10;No septic yet"></textarea>
+        </div>
+        <div class="fld form-full"><label>Notes (agent info, observations, etc.)</label>
+          <textarea id="f-notes" placeholder="Alexandra Schrank, RE/MAX 704-576-8076"></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="addProp()">Save property</button>
+        <button class="btn btn-ghost" onclick="showTab('all',document.querySelector('.tab'))">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Setup overlay -->
+<div class="setup-overlay" id="setup-overlay" style="display:none;">
+  <div class="setup-card">
+    <h2>Connect your database</h2>
+    <p>Enter your Supabase credentials to sync properties across all your devices. Find these at <code>supabase.com → Settings → API</code>.</p>
+    <div class="fld"><label>Supabase Project URL</label>
+      <input id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co"/>
+    </div>
+    <div class="fld" style="margin-bottom:16px;"><label>Supabase Anon / Public Key</label>
+      <input id="sb-key" placeholder="eyJhbGciOiJI..."/>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="saveCredentials()">Connect</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('setup-overlay').style.display='none'">Cancel</button>
+    </div>
+    <div id="sb-err" style="font-size:12px;color:#A32D2D;margin-top:10px;display:none;"></div>
+  </div>
+</div>
+
+<script>
+const C = {occ:0.45,adr:210,down:0.30,rate:0.08,term:360};
+
+const SEED = [
+  {id:'seed1',plan:'A',addr:'158 Sugar Cove Rd',loc:'Weaverville, NC 28787',price:299000,acres:19.54,build:195000,zone:'OU',hoa:'none',str:'yes',road:'paved',septic:'needed',photo:'https://photos.zillowstatic.com/fp/9cbc7f550f816f6dc6e05872279bbd0b-cc_ft_960.jpg',url:'https://www.zillow.com/homedetails/158-Sugar-Cove-Rd-Weaverville-NC-28787/5648587_zpid/',pros:['STR explicitly mentioned in listing','19.54 ac at $15.3K/acre','Creek on property','Paved public road','OU zoning'],cons:['CCR undiscovered — title search required','345+ days on market'],notes:'Top Plan A pick. Agent: Alexandra Schrank, RE/MAX 704-576-8076'},
+  {id:'seed2',plan:'A',addr:'99999 Majestic Mountain Dr',loc:'E. Asheville, NC 28805',price:180000,acres:11.37,build:185000,zone:'OU likely',hoa:'none',str:'likely',road:'paved',septic:'needed',photo:'https://photos.zillowstatic.com/fp/7971a254974be313e63bfa2089c4b5db-cc_ft_960.jpg',url:'https://www.zillow.com/homedetails/99999-Majestic-Mountain-Dr-Asheville-NC-28805/456580260_zpid/',pros:['Gentle slope = low foundation cost','Blue Ridge Pkwy adjacent','11+ acres at $15.8K/acre'],cons:['Must confirm unincorporated Buncombe — not inside Asheville city limits'],notes:'Run GIS check first at buncombecounty.org/gis'},
+  {id:'seed3',plan:'A',addr:'700 Wooded Mountain Trl',loc:'Mars Hill, NC 28754',price:285000,acres:12,build:0,zone:'Unrestricted',hoa:'none',str:'yes',road:'paved',septic:'installed',photo:'https://photos.zillowstatic.com/fp/7689c844e3779feeb856b039cc56c0b4-cc_ft_960.jpg',url:'https://www.zillow.com/homedetails/700-Wooded-Mountain-Trl-Mars-Hill-NC-28754/',pros:['Two cleared build sites','Septic installed — lower site','Active 4-BR permit upper site (2028)','Underground electric + fiber','Spring-fed pond'],cons:['Price/acreage estimated — confirm current listing','30 min to Asheville'],notes:'Price cut received April 1. Likely the best-prepared site on the list.'},
+  {id:'seed4',plan:'A',addr:'0 Destiny Farms Rd',loc:'Leicester, NC 28748',price:129111,acres:10,build:185000,zone:'OU',hoa:'none',str:'likely',road:'gravel',septic:'needed',photo:'https://photos.zillowstatic.com/fp/cfc9109c0244fd7e8c8b643d74473cec-cc_ft_960.jpg',url:'https://www.zillow.com/homedetails/0-Destiny-Farms-Rd-Leicester-NC-28748/370652911_zpid/',pros:['Cheapest land — $12.9K/acre','Graded pad already built','Driveway in place','OU zoned'],cons:['Gravel road — guest experience concern','Leicester less-established STR corridor'],notes:'Best cashflow math. Verify winter road condition.'},
+  {id:'seed5',plan:'A',addr:'279 Morgan Branch Rd',loc:'Weaverville, NC 28787',price:275000,acres:21,build:200000,zone:'Unrestricted',hoa:'none',str:'yes',road:'gravel',septic:'needed',photo:'https://photos.zillowstatic.com/fp/e43663363187d5f6ad7d6f31fa6ad0c4-cc_ft_576.jpg',url:'https://www.redfin.com/NC/Weaverville/279-Morgan-Branch-Rd-28787/home/191247320',pros:['21 unrestricted acres','Seller financing available','Multiple springs','Room for 2nd STR unit later'],cons:['Steep sections — site work cost uncertain','Gravel access road'],notes:'Ask seller about financing terms. Old road bed in place.'},
+  {id:'seed6',plan:'B',addr:'2BR Cabin — Black Mountain',loc:'Black Mountain, NC 28711',price:385000,acres:1.5,build:45000,zone:'Unincorporated Buncombe',hoa:'none',str:'yes',road:'paved',septic:'installed',photo:'https://photos.zillowstatic.com/fp/4cbf46136dceb292287100dba271a5ae-cc_ft_960.jpg',url:'https://www.redfin.com/city/1629/NC/Black-Mountain/amenity/short+term+rental',pros:['Proven STR market (59% median occ)','60–90 days to revenue','Walkable to downtown Black Mtn','No HOA'],cons:['Small acreage limits homestead future','Confirm no deed STR restrictions'],notes:'Pull specific listing from Redfin STR filter.'},
+  {id:'seed7',plan:'B',addr:'3BR Swannanoa — wraparound porch + hot tub',loc:'Swannanoa, NC 28778',price:410000,acres:2.68,build:35000,zone:'Unincorporated Buncombe',hoa:'none',str:'yes',road:'paved',septic:'installed',photo:'https://photos.zillowstatic.com/fp/2882ab0defcd02e8dccda4b260dfbe2a-cc_ft_576.jpg',url:'https://www.redfin.com/city/25636/NC/Swannanoa',pros:['2.68 acres — room to expand','Wraparound porch + basement hot tub','Between Asheville and Black Mtn'],cons:['Confirm flood zone status post-Helene','Verify STR at parcel level'],notes:'3BR/3.5BA, finished basement, mountain views.'},
+];
+
+let SB_URL = '', SB_KEY = '';
+
+function loadCreds(){
+  SB_URL = localStorage.getItem('sb_url')||'';
+  SB_KEY = localStorage.getItem('sb_key')||'';
+  return !!(SB_URL && SB_KEY);
+}
+
+function saveCredentials(){
+  const u = document.getElementById('sb-url').value.trim().replace(/\/$/,'');
+  const k = document.getElementById('sb-key').value.trim();
+  if(!u||!k){showErr('Both fields required.');return;}
+  SB_URL=u; SB_KEY=k;
+  localStorage.setItem('sb_url',u);
+  localStorage.setItem('sb_key',k);
+  document.getElementById('setup-overlay').style.display='none';
+  init();
+}
+
+function showSetup(){
+  document.getElementById('sb-url').value=SB_URL;
+  document.getElementById('sb-key').value=SB_KEY;
+  document.getElementById('setup-overlay').style.display='flex';
+}
+
+function showErr(msg){const e=document.getElementById('sb-err');e.textContent=msg;e.style.display='block';}
+
+function setBadge(state,msg){
+  const b=document.getElementById('sync-badge');
+  b.textContent=msg;
+  b.className='sync-status '+(state==='ok'?'sync-ok':state==='err'?'sync-err':'sync-load');
+}
+
+async function sbFetch(method,path,body){
+  const res=await fetch(SB_URL+'/rest/v1/'+path,{
+    method,
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:body?JSON.stringify(body):undefined
+  });
+  if(!res.ok)throw new Error(await res.text());
+  return res.status===204?null:res.json();
+}
+
+async function loadProps(){
+  const rows=await sbFetch('GET','properties?order=created_at.asc');
+  return rows.map(r=>r.data);
+}
+
+async function saveNewProp(p){
+  await sbFetch('POST','properties',{id:p.id,data:p});
+}
+
+async function deletePropFromDB(id){
+  await sbFetch('DELETE','properties?id=eq.'+id);
+}
+
+async function seedIfEmpty(){
+  const rows=await sbFetch('GET','properties?select=id');
+  if(rows.length===0){
+    for(const p of SEED){
+      await sbFetch('POST','properties',{id:p.id,data:p});
+    }
+  }
+}
+
+let allProps=[];
+
+async function init(){
+  if(!loadCreds()){showSetup();setBadge('err','No database');return;}
+  setBadge('load','Connecting...');
+  try{
+    await seedIfEmpty();
+    allProps=await loadProps();
+    setBadge('ok','Synced');
+    renderGrid('grid-all',null);
+    renderGrid('grid-A','A');
+    renderGrid('grid-B','B');
+  }catch(e){
+    setBadge('err','DB error — check settings');
+    console.error(e);
+    allProps=[...SEED];
+    renderGrid('grid-all',null);
+  }
+}
+
+function pmt(rate,n,pv){const r=rate/12;return pv*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);}
+
+function calcF(p){
+  const buildCost=p.build||0;
+  const siteCost=p.plan==='A'?(p.septic==='installed'?20000:50000):0;
+  const total=p.price+buildCost+siteCost;
+  const down=Math.round(total*C.down);
+  const loan=total-down;
+  const monthlyPI=pmt(C.rate,C.term,loan);
+  const grossAnn=365*C.occ*C.adr;
+  const expenses=grossAnn*0.03+total*0.006+3800+5200+total*0.012+2400;
+  const noi=grossAnn-expenses;
+  const cf=(noi-monthlyPI*12)/12;
+  const coc=down>0?(noi-monthlyPI*12)/down*100:0;
+  return{total,down,loan,monthlyPI,grossAnn,expenses,noi,cf,coc};
+}
+
+function score(p){
+  let s=50;
+  if(p.str==='yes')s+=30;else if(p.str==='likely')s+=15;else if(p.str==='no')s-=50;
+  if((p.zone||'').toLowerCase().match(/ou|unrestricted/))s+=20;
+  if(p.hoa==='none')s+=15;else if(p.hoa==='heavy')s-=40;
+  if(p.road==='paved')s+=10;else if(p.road==='rough')s-=5;
+  if(p.septic==='installed')s+=15;else if(p.septic==='permitted')s+=8;
+  return Math.max(0,Math.min(100,s));
+}
+
+function fmt(n){return '$'+Math.round(Math.abs(n)).toLocaleString();}
+function fmtCF(n){const r=Math.round(n);return(r>=0?'+':'-')+'$'+Math.abs(r).toLocaleString();}
+
+function renderGrid(containerId,planFilter){
+  const c=document.getElementById(containerId);
+  let props=[...allProps];
+  if(planFilter)props=props.filter(p=>p.plan===planFilter);
+  props=props.filter(p=>p.str!=='no'&&p.hoa!=='heavy');
+  props.sort((a,b)=>score(b)-score(a));
+  if(!props.length){c.innerHTML='<div class="empty">No properties yet. Click "+ Add property" to get started.</div>';return;}
+  c.innerHTML=props.map(p=>{
+    const f=calcF(p);const sc=score(p);
+    const cfClass=f.cf>200?'pos':f.cf>-300?'neu':'neg';
+    const barColor=sc>=80?'#1D9E75':sc>=65?'#378ADD':'#EF9F27';
+    const verdict=sc>=80?'Top pick':sc>=65?'Strong':'Investigate';
+    const vClass=sc>=80?'v-top':sc>=65?'v-strong':'v-ok';
+    const cardClass=sc>=80?'top':sc>=65?'strong':'';
+    const pros=(p.pros||[]).slice(0,3).map(x=>`<div class="pro">+ ${x}</div>`).join('');
+    const cons=(p.cons||[]).slice(0,2).map(x=>`<div class="con">- ${x}</div>`).join('');
+    const imgHtml=p.photo
+      ?`<img class="card-img" src="${p.photo}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"/><div class="card-img-placeholder" style="display:none;">No photo</div>`
+      :`<div class="card-img-placeholder">No photo</div>`;
+    return `<div class="card ${cardClass}">
+      ${imgHtml}
+      <div class="stripe stripe-${p.plan.toLowerCase()}"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div><div class="card-title">${p.addr}</div><div class="card-sub">${p.loc||''} &bull; ${p.acres||'?'} ac</div></div>
+          <span class="plan-badge badge-${p.plan.toLowerCase()}">Plan ${p.plan}</span>
+        </div>
+        <div class="financials">
+          <div class="fin-row"><span class="fk">Total project cost</span><span class="fv">${fmt(f.total)}</span></div>
+          <div class="fin-row"><span class="fk">Down payment (30%)</span><span class="fv">${fmt(f.down)}</span></div>
+          <div class="fin-row"><span class="fk">Loan amount</span><span class="fv">${fmt(f.loan)}</span></div>
+          <div class="fin-row"><span class="fk">Monthly P+I (8% DSCR)</span><span class="fv">${fmt(f.monthlyPI)}/mo</span></div>
+          <div class="divider"></div>
+          <div class="fin-row"><span class="fk">Gross revenue (45% / $210)</span><span class="fv">${fmt(f.grossAnn/12)}/mo</span></div>
+          <div class="fin-row"><span class="fk">Est. operating expenses</span><span class="fv">${fmt(f.expenses/12)}/mo</span></div>
+          <div class="divider"></div>
+          <div class="fin-row"><span class="fk">Net monthly cashflow</span><span class="fv ${cfClass}">${fmtCF(f.cf)}/mo</span></div>
+          <div class="fin-row"><span class="fk">Cash-on-cash return</span><span class="fv ${cfClass}">${f.coc.toFixed(1)}%</span></div>
+        </div>
+        <div class="score-wrap">
+          <div class="score-top"><span>STR viability score</span><span style="font-weight:600;color:#1a1a1a;">${sc}/100</span></div>
+          <div class="bar-bg"><div class="bar-fg" style="width:${sc}%;background:${barColor};"></div></div>
+        </div>
+        <div class="pros-cons">${pros}${cons}</div>
+        ${p.notes?`<div style="font-size:11px;color:#888;margin-top:6px;font-style:italic;">${p.notes}</div>`:''}
+      </div>
+      <div class="card-footer">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="verdict ${vClass}">${verdict}</span>
+          <button class="delete-btn" onclick="deleteProp('${p.id}')">Remove</button>
+        </div>
+        ${p.url?`<a class="view-link" href="${p.url}" target="_blank">View listing</a>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addProp(){
+  const addr=document.getElementById('f-addr').value.trim();
+  if(!addr){alert('Address required.');return;}
+  const p={
+    id:'u'+Date.now(),
+    plan:document.getElementById('f-plan').value,
+    addr,loc:'',
+    price:parseFloat(document.getElementById('f-price').value)||0,
+    acres:parseFloat(document.getElementById('f-acres').value)||0,
+    build:parseFloat(document.getElementById('f-build').value)||0,
+    zone:document.getElementById('f-zone').value,
+    hoa:document.getElementById('f-hoa').value,
+    str:document.getElementById('f-str').value,
+    road:document.getElementById('f-road').value,
+    septic:document.getElementById('f-septic').value,
+    photo:document.getElementById('f-photo').value.trim(),
+    url:document.getElementById('f-url').value.trim(),
+    pros:document.getElementById('f-pros').value.split('\n').filter(x=>x.trim()),
+    cons:document.getElementById('f-cons').value.split('\n').filter(x=>x.trim()),
+    notes:document.getElementById('f-notes').value,
+  };
+  setBadge('load','Saving...');
+  try{
+    await saveNewProp(p);
+    allProps.unshift(p);
+    setBadge('ok','Synced');
+  }catch(e){
+    setBadge('err','Save failed');
+    allProps.unshift(p);
+  }
+  ['f-addr','f-url','f-photo','f-price','f-acres','f-build','f-zone','f-pros','f-cons','f-notes'].forEach(id=>document.getElementById(id).value='');
+  showTab('all',document.querySelector('.tab'));
+}
+
+async function deleteProp(id){
+  if(!confirm('Remove this property?'))return;
+  allProps=allProps.filter(p=>p.id!==id);
+  renderGrid('grid-all',null);renderGrid('grid-A','A');renderGrid('grid-B','B');
+  try{await deletePropFromDB(id);setBadge('ok','Synced');}
+  catch(e){setBadge('err','Delete failed — refresh to restore');}
+}
+
+function showTab(name,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}
+  if(name==='all')renderGrid('grid-all',null);
+  else if(name==='A')renderGrid('grid-A','A');
+  else if(name==='B')renderGrid('grid-B','B');
+}
+
+init();
+</script>
+</body>
+</html>
