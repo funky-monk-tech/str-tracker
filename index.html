@@ -251,6 +251,7 @@ const SEED = [
 // ── PASTE YOUR SUPABASE CREDENTIALS HERE ──────────────────────────────
 const DEFAULT_SB_URL = 'https://atfkqzuzylfcmcbsmybn.supabase.co';
 const DEFAULT_SB_KEY = 'PASTE_YOUR_LEGACY_ANON_KEY_HERE';
+const DEFAULT_ANTHROPIC_KEY = ''; // Optional: paste your Anthropic API key here
 // ──────────────────────────────────────────────────────────────────────
 
 let SB_URL = '', SB_KEY = '';
@@ -274,13 +275,14 @@ function saveCredentials(){
   localStorage.setItem('sb_url',u);
   localStorage.setItem('sb_key',k);
   document.getElementById('setup-overlay').style.display='none';
-  init();
-const savedView=localStorage.getItem("mr_view");if(savedView&&savedView!=="standard"){const vb=document.querySelector(`.vt-btn[onclick*="${savedView}"]`);setView(savedView,vb);}
+  const savedView=localStorage.getItem('mr_view');if(savedView&&savedView!=='standard'){const btn=document.querySelector('.vt-btn[title]');setView(savedView,null);}
 }
 
 function showSetup(){
   document.getElementById('sb-url').value=SB_URL;
   document.getElementById('sb-key').value=SB_KEY;
+  const anthEl=document.getElementById('sb-anthropic');
+  if(anthEl) anthEl.value=localStorage.getItem('anthropic_key')||'';
   document.getElementById('setup-overlay').style.display='flex';
 }
 
@@ -469,8 +471,12 @@ async function addProp(){
     setBadge('err','Save failed');
     allProps.unshift(p);
   }
-  ['f-addr','f-url','f-photo','f-price','f-acres','f-build','f-zone','f-pros','f-cons','f-notes'].forEach(id=>document.getElementById(id).value='');
+  ['f-addr','f-url','f-photo','f-price','f-acres','f-build','f-zone','f-pros','f-cons','f-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderGrid('grid-all',null);
+  renderGrid('grid-A','A');
+  renderGrid('grid-B','B');
   showTab('all',document.querySelector('.tab'));
+  alert('Property saved!');
 }
 
 async function deleteProp(id){
@@ -555,11 +561,17 @@ For distance: estimate based on the location — Weaverville is ~15 min, Black M
 
 Return ONLY valid JSON. No explanation, no markdown, no backticks.`;
 
+    const anthKey = DEFAULT_ANTHROPIC_KEY || localStorage.getItem('anthropic_key') || '';
+    if(!anthKey){
+      status.style.color='#A32D2D';
+      status.textContent='Add an Anthropic API key in Settings to use AI analysis.';
+      return;
+    }
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': anthKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20251001',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
