@@ -66,7 +66,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cnotes{font-size:11px;color:#999;font-style:italic;margin-top:4px;} .compact .cnotes{display:none;}
 .cfoot{padding:8px 14px;border-top:1px solid #e5e5e3;display:flex;justify-content:space-between;align-items:center;}
 .verd{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;}
-.v-top{background:#E1F5EE;color:#085041;} .v-str{background:#E6F1FB;color:#0C447C;} .v-inv{background:#FAEEDA;color:#633806;}
+.v-top{background:#E1F5EE;color:#085041;} .v-str{background:#E6F1FB;color:#0C447C;} .v-inv{background:#FAEEDA;color:#633806;} .v-caut{background:#FCEBEB;color:#A32D2D;}
 .cacts{display:flex;gap:8px;align-items:center;}
 .clink{font-size:11px;color:#185FA5;text-decoration:none;} .clink:hover{text-decoration:underline;}
 .delbtn{font-size:10px;color:#A32D2D;background:none;border:none;cursor:pointer;padding:0;}
@@ -341,13 +341,62 @@ function calcF(p){
 }
 
 function score(p){
-  let s=50;
-  if(p.str==='yes') s+=30; else if(p.str==='likely') s+=15; else if(p.str==='no') s-=50;
-  if((p.zone||'').match(/ou|unrestricted/i)) s+=20;
-  if(p.hoa==='none') s+=15; else if(p.hoa==='heavy') s-=40;
-  if(p.road==='paved') s+=10; else if(p.road==='rough') s-=5;
-  if(p.septic==='installed') s+=15; else if(p.septic==='permitted') s+=8;
-  return Math.max(0,Math.min(100,s));
+  let s=0;
+
+  // STR permission — most critical factor (0-35pts)
+  if(p.str==='yes') s+=35;
+  else if(p.str==='likely') s+=22;
+  else if(p.str==='unknown') s+=8;
+  // no = already filtered before scoring
+
+  // Zoning (0-20pts)
+  const z=(p.zone||'').toLowerCase();
+  if(z.match(/open.use|\bou\b/)) s+=20;
+  else if(z.match(/unrestricted/)) s+=18;
+  else if(z.match(/r-?1|r-?a/)) s+=8;
+  else s+=5;
+
+  // HOA (0-15pts)
+  if(p.hoa==='none') s+=15;
+  else if(p.hoa==='light') s+=7;
+  // heavy = already filtered
+
+  // Road access (0-10pts)
+  if(p.road==='paved') s+=10;
+  else if(p.road==='paved-priv') s+=8;
+  else if(p.road==='gravel') s+=4;
+  else s+=1;
+
+  // Septic (0-10pts)
+  if(p.septic==='installed') s+=10;
+  else if(p.septic==='permitted') s+=6;
+  // needed = 0pts
+
+  // Distance to Asheville — STR guests care (0-5pts)
+  const d=(p.dist||'').match(/(\d+)\s*min/);
+  if(d){
+    const mins=parseInt(d[1]);
+    if(mins<=20) s+=5;
+    else if(mins<=30) s+=3;
+    else if(mins<=40) s+=1;
+  }
+
+  // Structure type — turnkey/existing = faster revenue (0-5pts)
+  if(p.struct==='turnkey') s+=5;
+  else if(p.struct==='existing') s+=4;
+  else if(p.struct==='fixer') s+=2;
+  else s+=1; // land-only: build what you want but takes longer
+
+  // Penalty: flags in cons text
+  const ct=(p.cons||[]).join(' ').toLowerCase();
+  if(ct.match(/ccr|deed restrict|covenant/)) s-=6;
+  if(ct.match(/flood zone/)) s-=6;
+  if(ct.match(/steep slope|very steep/)) s-=4;
+  if(ct.match(/\d+\s*(year|yr)s?\s*(on|sitting)/)) s-=3;
+  if(ct.match(/gravel road.*guest|guest.*gravel/)) s-=3;
+  if(ct.match(/no septic|no perc|perc needed/)) s-=2;
+
+  return Math.max(0,Math.min(100,Math.round(s)));
 }
 
 function $$(n){ return '$'+Math.round(Math.abs(n)).toLocaleString(); }
@@ -376,9 +425,9 @@ function renderGrid(gid, planF){
     const f=calcF(p), sc=score(p);
     const cfCls = f.cf>200?'pos':f.cf>-300?'neu':'neg';
     const bc = sc>=80?'#1D9E75':sc>=65?'#378ADD':'#EF9F27';
-    const verd = sc>=80?'Top pick':sc>=65?'Strong':'Investigate';
-    const vCls = sc>=80?'v-top':sc>=65?'v-str':'v-inv';
-    const cCls = sc>=80?'best':sc>=65?'good':'';
+    const verd = sc>=85?'Top pick':sc>=70?'Strong':sc>=55?'Investigate':'Caution';
+    const vCls = sc>=85?'v-top':sc>=70?'v-str':sc>=55?'v-inv':'v-caut';
+    const cCls = sc>=85?'best':sc>=70?'good':'';
     const pros = (p.pros||[]).slice(0,3).map(x=>`<div class="pro">+ ${x}</div>`).join('');
     const cons = (p.cons||[]).slice(0,2).map(x=>`<div class="con">- ${x}</div>`).join('');
     const img  = p.photo
