@@ -608,7 +608,6 @@ async function delProp(id){
 }
 
 // ── AI ANALYZER ──
-let aiBuf = null;
 async function analyzeURL(){
   const url = document.getElementById('ai-url').value.trim();
   if(!url){ alert('Paste a Zillow or Redfin URL first.'); return; }
