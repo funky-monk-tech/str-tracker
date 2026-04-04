@@ -72,6 +72,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cacts{display:flex;gap:8px;align-items:center;}
 .clink{font-size:11px;color:#185FA5;text-decoration:none;} .clink:hover{text-decoration:underline;}
 .delbtn{font-size:10px;color:#A32D2D;background:none;border:none;cursor:pointer;padding:0;}
+.editbtn{font-size:10px;color:#185FA5;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;}
 .empty{padding:50px;text-align:center;color:#888;font-size:13px;}
 .fsec{background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:18px 20px;margin-bottom:14px;}
 .fsec h3{font-size:14px;font-weight:700;margin-bottom:4px;}
@@ -231,6 +232,77 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="btn btnG" onclick="saveProp()">Save property</button>
         <button class="btn btnW" onclick="goTab('all',document.querySelector('.tab'))">Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="ov-edit" style="display:none;">
+  <div class="ocard" style="max-width:560px;">
+    <h2>Edit Property</h2>
+    <div class="fgrid">
+      <div class="fld fcol2"><label>Address</label><input id="e-addr"></div>
+      <div class="fld fcol2"><label>Location (City, NC ZIP)</label><input id="e-loc"></div>
+      <div class="fld fcol2"><label>Zillow / Redfin URL</label><input id="e-url"></div>
+      <div class="fld fcol2"><label>Photo URL</label><input id="e-photo"></div>
+      <div class="fld"><label>Plan</label>
+        <select id="e-plan">
+          <option value="A">Plan A — Land + Build</option>
+          <option value="B">Plan B — Buy + List</option>
+        </select>
+      </div>
+      <div class="fld"><label>Structure</label>
+        <select id="e-struct">
+          <option value="land-only">Land only</option>
+          <option value="fixer">Land + fixer</option>
+          <option value="existing">Land + livable structure</option>
+          <option value="turnkey">Turnkey</option>
+        </select>
+      </div>
+      <div class="fld"><label>Asking price ($)</label><input id="e-price" type="number"></div>
+      <div class="fld"><label>Acres</label><input id="e-acres" type="number" step="0.01"></div>
+      <div class="fld"><label>Build / reno cost ($)</label><input id="e-build" type="number"></div>
+      <div class="fld"><label>Zoning</label><input id="e-zone"></div>
+      <div class="fld"><label>HOA</label>
+        <select id="e-hoa">
+          <option value="none">None</option>
+          <option value="light">Light</option>
+          <option value="heavy">Heavy</option>
+        </select>
+      </div>
+      <div class="fld"><label>STR permitted?</label>
+        <select id="e-str">
+          <option value="yes">Yes — confirmed</option>
+          <option value="likely">Likely</option>
+          <option value="unknown">Unknown</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="fld"><label>Road access</label>
+        <select id="e-road">
+          <option value="paved">Paved, public</option>
+          <option value="paved-priv">Paved, private</option>
+          <option value="gravel">Gravel</option>
+          <option value="rough">Rough / 4WD</option>
+        </select>
+      </div>
+      <div class="fld"><label>Septic</label>
+        <select id="e-septic">
+          <option value="installed">Installed</option>
+          <option value="permitted">Permitted</option>
+          <option value="needed">Needed</option>
+        </select>
+      </div>
+      <div class="fld"><label>Distance to Asheville</label><input id="e-dist" placeholder="15 min to Asheville"></div>
+      <div class="fld"><label>Price per acre</label><input id="e-ppa"></div>
+      <div class="fld fcol2"><label>Pros (one per line)</label><textarea id="e-pros" style="min-height:70px;"></textarea></div>
+      <div class="fld fcol2"><label>Flags / concerns (one per line)</label><textarea id="e-cons" style="min-height:70px;"></textarea></div>
+      <div class="fld fcol2"><label>Notes</label><textarea id="e-notes" style="min-height:55px;"></textarea></div>
+    </div>
+    <div class="oerr" id="e-err"></div>
+    <div class="brow" style="margin-top:14px;">
+      <button class="btn btnG" onclick="saveEdit()">Save changes</button>
+      <button class="btn btnW" onclick="closeEdit()">Cancel</button>
     </div>
   </div>
 </div>
@@ -478,6 +550,7 @@ function renderGrid(gid, planF){
       <div class="cfoot">
         <div style="display:flex;gap:6px;align-items:center;">
           <span class="verd ${vCls}">${verd}</span>
+          <button class="editbtn" onclick="editProp('${p.id}')">Edit</button>
           <button class="delbtn" onclick="delProp('${p.id}')">Remove</button>
         </div>
         <div class="cacts">
@@ -675,6 +748,73 @@ function resetAI(){
   document.getElementById('ai-prev').style.display='none';
   document.getElementById('ai-conf').style.display='none';
   aiBuf=null;
+}
+
+// ── EDIT PROPERTY ──
+let editId = null;
+function editProp(id){
+  const p = props.find(x=>x.id===id);
+  if(!p) return;
+  editId = id;
+  document.getElementById('e-addr').value  = p.addr||'';
+  document.getElementById('e-loc').value   = p.loc||'';
+  document.getElementById('e-url').value   = p.url||'';
+  document.getElementById('e-photo').value = p.photo||'';
+  document.getElementById('e-plan').value  = p.plan||'A';
+  document.getElementById('e-struct').value= p.struct||'land-only';
+  document.getElementById('e-price').value = p.price||'';
+  document.getElementById('e-acres').value = p.acres||'';
+  document.getElementById('e-build').value = p.build||'';
+  document.getElementById('e-zone').value  = p.zone||'';
+  document.getElementById('e-hoa').value   = p.hoa||'none';
+  document.getElementById('e-str').value   = p.str||'unknown';
+  document.getElementById('e-road').value  = p.road||'paved';
+  document.getElementById('e-septic').value= p.septic||'needed';
+  document.getElementById('e-dist').value  = p.dist||'';
+  document.getElementById('e-ppa').value   = p.ppa||'';
+  document.getElementById('e-pros').value  = (p.pros||[]).join('\n');
+  document.getElementById('e-cons').value  = (p.cons||[]).join('\n');
+  document.getElementById('e-notes').value = p.notes||'';
+  document.getElementById('e-err').textContent='';
+  document.getElementById('ov-edit').style.display='flex';
+}
+
+function closeEdit(){
+  document.getElementById('ov-edit').style.display='none';
+  editId=null;
+}
+
+async function saveEdit(){
+  if(!editId) return;
+  const idx = props.findIndex(x=>x.id===editId);
+  if(idx===-1) return;
+  const updated = {...props[idx],
+    addr:  document.getElementById('e-addr').value.trim(),
+    loc:   document.getElementById('e-loc').value.trim(),
+    url:   document.getElementById('e-url').value.trim(),
+    photo: document.getElementById('e-photo').value.trim(),
+    plan:  document.getElementById('e-plan').value,
+    struct:document.getElementById('e-struct').value,
+    price: parseFloat(document.getElementById('e-price').value)||0,
+    acres: parseFloat(document.getElementById('e-acres').value)||0,
+    build: parseFloat(document.getElementById('e-build').value)||0,
+    zone:  document.getElementById('e-zone').value.trim(),
+    hoa:   document.getElementById('e-hoa').value,
+    str:   document.getElementById('e-str').value,
+    road:  document.getElementById('e-road').value,
+    septic:document.getElementById('e-septic').value,
+    dist:  document.getElementById('e-dist').value.trim(),
+    ppa:   document.getElementById('e-ppa').value.trim(),
+    pros:  document.getElementById('e-pros').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    cons:  document.getElementById('e-cons').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    notes: document.getElementById('e-notes').value.trim(),
+  };
+  props[idx]=updated;
+  badge('load','Saving...');
+  try{ await sb('POST','properties',{id:updated.id,data:updated}); badge('ok','Synced'); }
+  catch(e){ badge('err','Saved locally — DB sync failed'); }
+  renderAll();
+  closeEdit();
 }
 
 // ── SETTINGS ──
