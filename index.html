@@ -42,7 +42,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cloc{font-size:11px;color:#888;margin-top:1px;}
 .cmeta{display:flex;gap:8px;margin-top:5px;align-items:center;flex-wrap:wrap;}
 .cacres{font-size:15px;font-weight:700;} .compact .cacres{font-size:12px;}
-.cdist{font-size:12px;color:#1D9E75;font-weight:600;} .compact .cdist{font-size:10px;}
+.cdist{font-size:15px;font-weight:700;color:#1D9E75;} .compact .cdist{font-size:12px;}
+.cdist-label{font-size:10px;color:#888;font-weight:500;display:block;margin-top:-1px;} .compact .cdist-label{font-size:9px;}
+.cmeta-divider{width:1px;height:28px;background:#e0e0e0;margin:0 2px;} .compact .cmeta-divider{height:18px;}
 .struct-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;}
 .sb-land{background:#E6F1FB;color:#0C447C;}
 .sb-struct{background:#E1F5EE;color:#085041;}
@@ -443,8 +445,12 @@ function renderGrid(gid, planF){
             <div class="ctitle">${p.addr}</div>
             <div class="cloc">${p.loc||''}</div>
             <div class="cmeta">
-              <span class="cacres">${p.acres||'?'} ac</span>
-              ${p.dist?`<span class="cdist">${p.dist}</span>`:''}
+              <div style="display:flex;flex-direction:column;line-height:1.1;">
+                <span class="cacres">${p.acres||'?'} ac</span>
+                <span style="font-size:10px;color:#888;font-weight:500;">acreage</span>
+              </div>
+              ${p.dist?`<div class="cmeta-divider"></div><div style="display:flex;flex-direction:column;line-height:1.1;"><span class="cdist">${p.dist}</span><span style="font-size:10px;color:#888;font-weight:500;">to Asheville</span></div>`:''}
+              <div class="cmeta-divider"></div>
               ${structBadge(p.struct||'land-only')}
             </div>
           </div>
