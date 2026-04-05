@@ -392,7 +392,8 @@ async function init(){
       for(const p of SEEDS) await sb('POST','properties',{id:p.id,data:p});
     }
     const data = await sb('GET','properties?order=created_at.asc');
-    props = data.map(r=>r.data);
+    const seedMap = {}; SEEDS.forEach(s => seedMap[s.id] = s);
+    props = data.map(r=>{ const p=r.data; const seed=seedMap[p.id]; return seed ? Object.assign({},seed,p) : p; });
     badge('ok','Synced');
   } catch(e){
     badge('err','DB error — check Settings');
